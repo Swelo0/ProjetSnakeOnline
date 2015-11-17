@@ -1,0 +1,121 @@
+import socket
+from random import randint
+
+class snakeChannel:
+	# - host
+	# - port
+	# - s (socket)
+	# - reply
+	# - addr
+
+	def __init__(self,host,port,timeout,isServ):
+
+		self.host = host
+		self.port = port
+		self.reply = ''
+		self.addr = ''
+		self.isConnected = False
+		#Les numéros de séquence pour la communication
+		self.numSeq = 0
+		self.numSeqServ = 0
+		self.isServ = isServ
+		self.randNum = randint(0,2**32-1)#Notre num aléatoire pour la demande de token
+		self.numSeqMax = format(2**32-1,'08x')
+		if isServ:
+			self.clientSeq       = {}
+			self.servSeq         = {}
+			self.clientPhase     = {}
+			self.clientChallenge = {}
+		#Création socket
+		try :
+			self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+			print 'Socket created'
+		except socket.error, msg :
+			print 'Failed to create socket. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
+			sys.exit()
+		#Bind
+		try:
+			s.bind((host, port))
+		except socket.error , msg:
+			print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
+			sys.exit()
+		#Timeout set à 1 seconde si null
+		if not timeout:
+			s.settimeout(1)
+		else
+			s.settimeout(timeout)
+
+
+	def Connexion():
+
+		
+		#Demande de connexion client
+		data = format(2**32-1,'02x')+' GetToken '+str(randNum)+' Snake'
+		#-------------------------------------------------------------------#
+		# On demande un Token au serveur, on boucle tant qu'on ne l'a pas.  #
+		#-------------------------------------------------------------------#
+		while(1):
+			# Onvoie de la demande de Token
+			self.s.sendto(data,(self.host, self.port))
+			print 'send : ' + data + ' to host'
+
+			#On attend la réponse, si on reçoit rien, on relance
+			try:
+				d = s.recvfrom(1024)
+				self.reply = d[0].split(" ")
+				self.addr = d[1]
+
+				if self.reply[1] == 'Token' and self.reply[3] == str(randNum) :
+					Token = self.reply[2]
+					print 'Get Token from host ' + Token
+				else:
+					print 'Error message' # test
+					continue
+				break
+			except socket.timeout :
+				continue
+
+		#-----------------------------------------------------------------------------#
+		# Demande de connection au serveur, on boucle tant qu on n est pas connecté.  #
+		#-----------------------------------------------------------------------------#	
+		while self.isConnected == False :
+			data = format(2**32-1,'02x')+' Connect \challenge\\'+ Token +'\protocol\\19'
+			print data
+			self.s.sendto(data,(self.host, self.port))	
+
+			#On attend la réponse, si on reçoit rien, on relance
+			try:
+				d = s.recvfrom(1024)
+				self.reply = d[0].split(" ")
+				self.addr = d[1]		
+				if self.reply[1] == 'Connected' and self.reply[2] == Token :
+					print 'Connected to host'
+					self.isConnected = True
+				else:
+					print 'Error message' # test
+					continue
+				break
+			except socket.timeout :
+				continue
+
+###############################################
+	def read():
+		try:
+			data, self.addr = s.recvfrom(1024)
+			self.reply = data.split(" ")	
+		except socket.timeout :
+			continue
+
+		if isServ:
+			#--------------------------------------------------------#
+			# Si séquence égale demande de connexion phase GetToken  #
+			#--------------------------------------------------------#		
+			if self.reply[0] == self.numSeqMax and self.reply[1] == 'GetToken':
+				msg = ' Token '+str(randNum)+' '+self.reply[2]+' 19'
+				# write(numSeqMax,msg,addr)
+				self.clientPhase = 'GetToken'
+				self.clientChallenge
+				
+				
+	def write():
+		
